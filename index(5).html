@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facturas e Recibos com o seu logo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--ink:#17202A;--muted:#5B6770;--bg:#EEF1F0;--line:#D3DAD7;--green:#0F5C4D;--green-dk:#0A4439;--paper:#fff;--red:#B3202A}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #E8A200;outline-offset:2px}
+.hidden{display:none!important}
+
+/* Acesso */
+#login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login-box{background:var(--paper);width:100%;max-width:380px;padding:28px 24px;border-radius:10px;border:1px solid var(--line)}
+.login-box h1{font-size:1.5rem;margin:0 0 6px;line-height:1.2}
+.login-box p{margin:0 0 18px;color:var(--muted)}
+#erro{color:var(--red);min-height:1.4em;margin:8px 0 0;font-size:.95rem}
+.renovar{display:block;margin-top:14px;font-size:.95rem;color:var(--green)}
+
+/* App */
+header.top{background:var(--ink);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+header.top strong{font-size:1.05rem}
+header.top small{opacity:.75}
+.sair{background:none;border:1px solid #fff5;color:#fff;border-radius:6px;padding:6px 12px;cursor:pointer}
+main{display:grid;gap:18px;padding:16px;max-width:1100px;margin:0 auto}
+@media(min-width:900px){main{grid-template-columns:1fr 1fr;align-items:start}.preview-col{position:sticky;top:12px}}
+
+fieldset{background:var(--paper);border:1px solid var(--line);border-radius:10px;margin:0 0 14px;padding:14px 16px 16px}
+legend{font-weight:700;padding:0 6px}
+label{display:block;font-size:.9rem;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:1rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.logo-line{display:flex;align-items:center;gap:12px;margin-top:6px}
+#logoThumb{width:64px;height:64px;object-fit:contain;border:1px dashed var(--line);border-radius:8px;background:#fafafa}
+.btn{border:0;border-radius:8px;padding:12px 16px;font-weight:700;cursor:pointer;background:var(--green);color:#fff;font-size:1rem}
+.btn:hover{background:var(--green-dk)}
+.btn.sec{background:#fff;color:var(--green);border:2px solid var(--green)}
+.btn.small{padding:8px 12px;font-size:.9rem}
+.btn.ghost{background:none;color:var(--red);border:0;padding:8px}
+
+.item{display:grid;grid-template-columns:1fr 64px 96px 28px;gap:6px;margin-bottom:8px;align-items:center}
+.item input{padding:9px 8px}
+.item-head{display:grid;grid-template-columns:1fr 64px 96px 28px;gap:6px;font-size:.8rem;color:var(--muted)}
+.item .x{background:none;border:0;color:var(--red);font-size:1.3rem;cursor:pointer;padding:0}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions .btn{flex:1 1 140px}
+.aviso{font-size:.85rem;color:var(--muted);margin-top:10px}
+
+/* Pré-visualização */
+.sheet{background:var(--paper);border:1px solid var(--line);border-top:6px solid var(--green);border-radius:4px;padding:18px;font-size:.82rem;box-shadow:0 6px 18px #0002}
+.sheet .cab{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}
+.sheet .cab img{max-width:120px;max-height:60px;object-fit:contain;display:block;margin-bottom:6px}
+.sheet .tipo{text-align:right}
+.sheet .tipo b{font-size:1.15rem;display:block}
+.sheet table{width:100%;border-collapse:collapse;margin-top:10px}
+.sheet th{text-align:left;background:#EEF1F0;padding:6px;font-weight:600}
+.sheet td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+.sheet .n{text-align:right;white-space:nowrap}
+.sheet .tot{text-align:right;font-size:1rem;margin-top:10px}
+.sheet .rod{margin-top:16px;color:var(--muted);font-size:.75rem;border-top:1px solid var(--line);padding-top:8px}
+.vazio{color:#9aa4a0}
+</style>
+</head>
+<body>
+
+<!-- ======= ACESSO ======= -->
+<section id="login">
+  <div class="login-box">
+    <h1>Facturas e recibos com o seu logo</h1>
+    <p>Digite o código de acesso que recebeu para entrar.</p>
+    <label for="codigo">Código de acesso</label>
+    <input id="codigo" autocomplete="off" autocapitalize="characters" placeholder="Ex.: FX-AB12CD">
+    <p id="erro" role="alert"></p>
+    <button class="btn" id="entrar" style="width:100%;margin-top:6px">Entrar</button>
+    <a class="renovar" id="linkRenovar" href="#" target="_blank" rel="noopener">Ainda não tem código? Peça aqui no WhatsApp</a>
+  </div>
+</section>
+
+<!-- ======= APP ======= -->
+<div id="app" class="hidden">
+  <header class="top">
+    <div><strong>Facturas e Recibos</strong><br><small id="validade"></small></div>
+    <button class="sair" id="sair">Sair</button>
+  </header>
+
+  <main>
+    <div class="form-col">
+      <fieldset>
+        <legend>Tipo de documento</legend>
+        <select id="tipo">
+          <option value="FP">Factura proforma</option>
+          <option value="RC">Recibo</option>
+          <option value="OR">Orçamento</option>
+        </select>
+      </fieldset>
+
+      <fieldset>
+        <legend>A sua loja</legend>
+        <label for="lNome">Nome da loja</label>
+        <input id="lNome" placeholder="Ex.: Bela Moda Luanda">
+        <div class="row2">
+          <div><label for="lNif">NIF</label><input id="lNif" inputmode="numeric"></div>
+          <div><label for="lCont">Telefone / WhatsApp</label><input id="lCont" inputmode="tel"></div>
+        </div>
+        <label for="lEnd">Endereço (opcional)</label>
+        <input id="lEnd" placeholder="Bairro, cidade">
+        <label for="logoFile">Logo</label>
+        <div class="logo-line">
+          <img id="logoThumb" alt="" class="hidden">
+          <input type="file" id="logoFile" accept="image/*">
+        </div>
+        <p class="aviso">Os dados da loja ficam guardados neste telemóvel para a próxima vez.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cliente</legend>
+        <label for="cNome">Nome do cliente</label>
+        <input id="cNome">
+        <label for="cNif">NIF do cliente (opcional)</label>
+        <input id="cNif" inputmode="numeric">
+      </fieldset>
+
+      <fieldset>
+        <legend>Produtos</legend>
+        <div class="item-head"><span>Descrição</span><span>Qtd.</span><span>Preço (Kz)</span><span></span></div>
+        <div id="itens"></div>
+        <button class="btn sec small" id="addItem" type="button">+ Adicionar produto</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Pagamento e notas</legend>
+        <label for="pag">Forma de pagamento</label>
+        <select id="pag">
+          <option value="">Não indicar</option>
+          <option>Numerário</option>
+          <option>Transferência bancária</option>
+          <option>Multicaixa Express</option>
+          <option>TPA</option>
+        </select>
+        <label for="obs">Observações (opcional)</label>
+        <textarea id="obs" rows="2"></textarea>
+      </fieldset>
+
+      <div class="actions">
+        <button class="btn" id="baixar" type="button">Baixar PDF</button>
+        <button class="btn sec" id="partilhar" type="button">Enviar por WhatsApp</button>
+      </div>
+      <p class="aviso">Documento informal, sem valor fiscal. Não substitui factura emitida por software certificado pela AGT.</p>
+    </div>
+
+    <div class="preview-col">
+      <div class="sheet" id="sheet" aria-live="polite"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============ CONFIGURAÇÃO (edite aqui) ============ */
+const CONFIG = {
+  marca: "Gerado por NOME DO SEU SERVIÇO",   // aparece no rodapé do PDF
+  whatsappRenovar: "244900000000",            // o seu WhatsApp, com 244 à frente
+  // Códigos: "hash do código": "data de validade AAAA-MM-DD"
+  // Gere novas linhas com o ficheiro gerar-codigo.html (guarde-o só no seu computador/telemóvel)
+  codigos: {
+    "488eecb21ee443a12cba49fc07e383ac7ee0b4c5d77cbc11158d2cf8537a0ffa": "2026-12-31"  // código de teste: TESTE2026
+  }
+};
+/* =================================================== */
+
+const $ = id => document.getElementById(id);
+const TIPOS = {FP:"Factura proforma", RC:"Recibo", OR:"Orçamento"};
+const LS = {get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}, set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+
+/* ---------- Acesso ---------- */
+async function sha(t){
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+const fmtData = iso => iso.split("-").reverse().join("/");
+async function validar(cod){
+  const h = await sha(cod.trim().toUpperCase());
+  const exp = CONFIG.codigos[h];
+  if(!exp) return {ok:false, msg:"Código inválido. Confirme e tente de novo."};
+  if(new Date(exp+"T23:59:59") < new Date()) return {ok:false, msg:"Código expirado em "+fmtData(exp)+". Peça a renovação."};
+  return {ok:true, exp};
+}
+$("linkRenovar").href = "https://wa.me/"+CONFIG.whatsappRenovar+"?text="+encodeURIComponent("Olá! Quero o código de acesso para facturas e recibos.");
+
+async function tentarEntrar(cod){
+  const r = await validar(cod);
+  if(!r.ok){ $("erro").textContent = r.msg; localStorage.removeItem("fx_codigo"); return false; }
+  localStorage.setItem("fx_codigo", cod.trim().toUpperCase());
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("validade").textContent = "Acesso válido até "+fmtData(r.exp);
+  iniciarApp();
+  return true;
+}
+$("entrar").onclick = ()=>tentarEntrar($("codigo").value);
+$("codigo").addEventListener("keydown",e=>{if(e.key==="Enter")tentarEntrar($("codigo").value)});
+$("sair").onclick = ()=>{localStorage.removeItem("fx_codigo");location.reload()};
+const guardado = localStorage.getItem("fx_codigo");
+if(guardado) tentarEntrar(guardado);
+
+/* ---------- Dados ---------- */
+let loja = LS.get("fx_loja", {nome:"",nif:"",cont:"",end:"",logo:null});
+let seq  = LS.get("fx_seq", {FP:0,RC:0,OR:0});
+let iniciado = false;
+
+function kz(n){
+  const [i,d] = (Math.round(n*100)/100).toFixed(2).split(".");
+  return i.replace(/\B(?=(\d{3})+(?!\d))/g,".")+","+d+" Kz";
+}
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const hoje = () => new Date().toLocaleDateString("pt-PT");
+const numeroDoc = (t,avancar=false) => {
+  const n = seq[t] + (avancar?0:1);
+  return t+" "+new Date().getFullYear()+"/"+String(n).padStart(4,"0");
+};
+
+function iniciarApp(){
+  if(iniciado) return; iniciado = true;
+  $("lNome").value=loja.nome; $("lNif").value=loja.nif; $("lCont").value=loja.cont; $("lEnd").value=loja.end;
+  if(loja.logo){ $("logoThumb").src=loja.logo.url; $("logoThumb").classList.remove("hidden"); }
+  addLinha(); desenhar();
+  document.querySelectorAll("#app input, #app select, #app textarea").forEach(el=>el.addEventListener("input",()=>{guardarLoja();desenhar()}));
+}
+function guardarLoja(){
+  loja.nome=$("lNome").value; loja.nif=$("lNif").value; loja.cont=$("lCont").value; loja.end=$("lEnd").value;
+  LS.set("fx_loja", loja);
+}
+
+/* ---------- Logo ---------- */
+$("logoFile").addEventListener("change", e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const img = new Image();
+  img.onload = ()=>{
+    const max = 400, k = Math.min(1, max/Math.max(img.width,img.height));
+    const w = Math.round(img.width*k), h = Math.round(img.height*k);
+    const c = document.createElement("canvas"); c.width=w; c.height=h;
+    c.getContext("2d").drawImage(img,0,0,w,h);
+    loja.logo = {url:c.toDataURL("image/png"), w, h};
+    LS.set("fx_loja", loja);
+    $("logoThumb").src = loja.logo.url; $("logoThumb").classList.remove("hidden");
+    desenhar();
+  };
+  img.src = URL.createObjectURL(f);
+});
+
+/* ---------- Produtos ---------- */
+function addLinha(){
+  const d = document.createElement("div"); d.className="item";
+  d.innerHTML = '<input class="d" aria-label="Descrição" placeholder="Produto"><input class="q" aria-label="Quantidade" type="number" min="1" value="1" inputmode="numeric"><input class="p" aria-label="Preço" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><button class="x" type="button" aria-label="Remover produto">×</button>';
+  d.querySelector(".x").onclick = ()=>{ if(document.querySelectorAll(".item").length>1){d.remove();desenhar()} };
+  d.querySelectorAll("input").forEach(i=>i.addEventListener("input",desenhar));
+  $("itens").appendChild(d);
+}
+$("addItem").onclick = ()=>{addLinha();document.querySelector(".item:last-child .d").focus()};
+function lerItens(){
+  return [...document.querySelectorAll(".item")].map(r=>({
+    d:r.querySelector(".d").value.trim(),
+    q:parseFloat(r.querySelector(".q").value)||0,
+    p:parseFloat(r.querySelector(".p").value)||0
+  })).filter(i=>i.d||i.p);
+}
+const totalDe = its => its.reduce((s,i)=>s+i.q*i.p,0);
+
+/* ---------- Pré-visualização ---------- */
+function desenhar(){
+  const t = $("tipo").value, its = lerItens();
+  const v = (x,ph)=> x ? esc(x) : '<span class="vazio">'+ph+'</span>';
+  let h = '<div class="cab"><div>'+(loja.logo?'<img src="'+loja.logo.url+'" alt="">':'')+
+    '<b>'+v(loja.nome,"Nome da loja")+'</b><br>'+(loja.nif?'NIF: '+esc(loja.nif)+'<br>':'')+
+    (loja.cont?esc(loja.cont)+'<br>':'')+(loja.end?esc(loja.end):'')+'</div>'+
+    '<div class="tipo"><b>'+TIPOS[t]+'</b>'+numeroDoc(t)+'<br>'+hoje()+'</div></div>';
+  h += '<div><b>Cliente:</b> '+v($("cNome").value,"Nome do cliente")+($("cNif").value?' · NIF '+esc($("cNif").value):'')+'</div>';
+  h += '<table><tr><th>Descrição</th><th class="n">Qtd.</th><th class="n">Preço</th><th class="n">Total</th></tr>';
+  if(!its.length) h += '<tr><td colspan="4" class="vazio">Adicione produtos</td></tr>';
+  its.forEach(i=>{ h += '<tr><td>'+esc(i.d)+'</td><td class="n">'+i.q+'</td><td class="n">'+kz(i.p)+'</td><td class="n">'+kz(i.q*i.p)+'</td></tr>'; });
+  h += '</table><div class="tot"><b>Total: '+kz(totalDe(its))+'</b></div>';
+  if(t==="RC" && $("pag").value) h += '<div>Pagamento: '+esc($("pag").value)+'</div>';
+  if($("obs").value) h += '<div style="margin-top:8px">'+esc($("obs").value).replace(/\n/g,"<br>")+'</div>';
+  h += '<div class="rod">Documento sem valor fiscal. '+esc(CONFIG.marca)+'</div>';
+  $("sheet").innerHTML = h;
+}
+
+/* ---------- PDF ---------- */
+function validarCampos(){
+  if(!$("lNome").value.trim()){ alert("Preencha o nome da loja."); return false; }
+  if(!lerItens().length){ alert("Adicione pelo menos um produto."); return false; }
+  return true;
+}
+function criarPDF(){
+  const {jsPDF} = window.jspdf, doc = new jsPDF({unit:"mm",format:"a4"});
+  const t = $("tipo").value, its = lerItens(), M = 15, W = 210;
+  let y = 18;
+  // Logo
+  let xTxt = M;
+  if(loja.logo){
+    const maxW=45, maxH=22, r=Math.min(maxW/loja.logo.w, maxH/loja.logo.h);
+    const w=loja.logo.w*r, h=loja.logo.h*r;
+    doc.addImage(loja.logo.url,"PNG",M,y-4,w,h); y += h;
+  }
+  // Loja
+  doc.setFont("helvetica","bold").setFontSize(13).text(loja.nome,M,y+2);
+  doc.setFont("helvetica","normal").setFontSize(10);
+  let ly = y+8;
+  if(loja.nif){doc.text("NIF: "+loja.nif,M,ly);ly+=5}
+  if(loja.cont){doc.text(loja.cont,M,ly);ly+=5}
+  if(loja.end){doc.text(loja.end,M,ly);ly+=5}
+  // Título à direita
+  doc.setFont("helvetica","bold").setFontSize(18).text(TIPOS[t].toUpperCase(),W-M,22,{align:"right"});
+  doc.setFont("helvetica","normal").setFontSize(10);
+  doc.text(numeroDoc(t),W-M,29,{align:"right"});
+  doc.text("Data: "+hoje(),W-M,34,{align:"right"});
+  // Cliente
+  y = Math.max(ly,40)+6;
+  doc.setDrawColor(200).line(M,y,W-M,y); y += 7;
+  doc.setFont("helvetica","bold").text("Cliente:",M,y);
+  doc.setFont("helvetica","normal").text(($("cNome").value||"—")+($("cNif").value?"   NIF: "+$("cNif").value:""),M+17,y);
+  y += 8;
+  // Tabela
+  const cabecalho = ()=>{
+    doc.setFillColor(15,92,77).rect(M,y,W-2*M,8,"F");
+    doc.setTextColor(255).setFont("helvetica","bold");
+    doc.text("Descrição",M+2,y+5.5); doc.text("Qtd.",118,y+5.5,{align:"right"});
+    doc.text("Preço unit.",152,y+5.5,{align:"right"}); doc.text("Total",W-M-2,y+5.5,{align:"right"});
+    doc.setTextColor(0).setFont("helvetica","normal"); y += 8;
+  };
+  cabecalho();
+  its.forEach(i=>{
+    const linhas = doc.splitTextToSize(i.d||"—",85), alt = Math.max(7, linhas.length*5+2);
+    if(y+alt>265){ doc.addPage(); y=20; cabecalho(); }
+    doc.text(linhas,M+2,y+5);
+    doc.text(String(i.q),118,y+5,{align:"right"});
+    doc.text(kz(i.p),152,y+5,{align:"right"});
+    doc.text(kz(i.q*i.p),W-M-2,y+5,{align:"right"});
+    doc.setDrawColor(225).line(M,y+alt,W-M,y+alt); y += alt;
+  });
+  y += 8;
+  if(y>250){doc.addPage();y=20}
+  doc.setFont("helvetica","bold").setFontSize(13).text("TOTAL: "+kz(totalDe(its)),W-M,y,{align:"right"});
+  doc.setFont("helvetica","normal").setFontSize(10);
+  y += 9;
+  if(t==="RC" && $("pag").value){doc.text("Forma de pagamento: "+$("pag").value,M,y); y+=6}
+  if($("obs").value){ doc.text(doc.splitTextToSize($("obs").value,W-2*M),M,y); }
+  // Rodapé
+  doc.setFontSize(8).setTextColor(110);
+  doc.text("Documento sem valor fiscal.",M,287);
+  doc.text(CONFIG.marca,W-M,287,{align:"right"});
+  return doc;
+}
+function nomeFicheiro(){ return TIPOS[$("tipo").value].replace(/\s/g,"_")+"_"+numeroDoc($("tipo").value).replace(/[\s/]/g,"-")+".pdf"; }
+function consumirNumero(){ const t=$("tipo").value; seq[t]++; LS.set("fx_seq",seq); desenhar(); }
+
+$("tipo").addEventListener("change",desenhar);
+$("baixar").onclick = ()=>{
+  if(!validarCampos()) return;
+  const doc = criarPDF(), nome = nomeFicheiro();
+  doc.save(nome); consumirNumero();
+};
+$("partilhar").onclick = async ()=>{
+  if(!validarCampos()) return;
+  const doc = criarPDF(), nome = nomeFicheiro();
+  const file = new File([doc.output("blob")], nome, {type:"application/pdf"});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], title:nome}); consumirNumero(); }catch(e){}
+  }else{
+    doc.save(nome); consumirNumero();
+    alert("O PDF foi guardado. Abra o WhatsApp e envie o ficheiro ao cliente.");
+  }
+};
+</script>
+</body>
+</html>
